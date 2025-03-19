@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const bcrypt = require('bcryptjs'); // Adicionei bcryptjs para criptografar senha
+const bcrypt = require('bcrypt'); // Adicionei bcryptjs para criptografar senha
 
 const app = express();
 app.use(cors('*'));
@@ -34,12 +34,12 @@ app.get('/usuario/listar', async (req, res) => {
 
 // CRUD - Create (Cadastrando usuário)
 app.post('/usuario/cadastrar', async (req, res) => {
-    const { nome, email, senha, endereco, cidade, estado } = req.body;
+    const { nome, senha, tipo_usuario, data_cadastro } = req.body;
     const senhaCriptografada = await bcrypt.hash(senha, 10);
-    const sql = "INSERT INTO JJJ_usuario (nome, email, senha, endereco, cidade, estado) VALUES (?, ?, ?, ?, ?, ?)";
+    const sql = "INSERT INTO JJJ_usuario (nome, senha, tipo_usuario, data_cadastro) VALUES (?, ?, ?, ?, ?, ?)";
 
     try {
-        const [rows] = await connection.execute(sql, [nome, email, senhaCriptografada, endereco, cidade, estado]);
+        const [rows] = await connection.execute(sql, [nome, senhaCriptografada,tipo_usuario,data_cadastro]);
         res.json({
             msg: "Usuário cadastrado com sucesso!",
             usuario: rows
@@ -89,11 +89,11 @@ app.get('/registros/listar', async (req, res) => {
 
 // CRUD - Create (Adicionar registro)
 app.post('/registro/adicionar', async (req, res) => {
-    const { campo1, campo2, campo3 } = req.body; // Ajuste os campos de acordo com sua tabela de registros
-    const sql = "INSERT INTO JJJ_registros (campo1, campo2, campo3) VALUES (?, ?, ?)";
+    const { longitude, latitude, endereco, caminhoFoto, data_registro,status } = req.body; // Ajuste os campos de acordo com sua tabela de registros
+    const sql = "INSERT INTO JJJ_registros (longitude, latitude, endereco, caminhoFoto, data_registro,status) VALUES (?, ?, ?)";
 
     try {
-        const [rows] = await connection.execute(sql, [campo1, campo2, campo3]);
+        const [rows] = await connection.execute(sql, [longitude, latitude, endereco, caminhoFoto, data_registro,status]);
         res.json({
             msg: "Registro adicionado com sucesso!",
             registro: rows
@@ -128,15 +128,15 @@ app.delete('/registro/excluir/:id', async (req, res) => {
             error: err.message
         });
     }
-});
-
+})
+ 
 // Rota de Login
 app.post('/usuario/login', async (req, res) => {
-  const { email, senha } = req.body;
-  const sql = "SELECT * FROM JJJ_usuario WHERE email = ?";
+  const { nome, senha } = req.body;
+  const sql = "SELECT * FROM JJJ_usuario WHERE usuario = ?";
 
   try {
-      const [rows] = await connection.execute(sql, [email]);
+      const [rows] = await connection.execute(sql, [nome]);
       
       if (rows.length === 0) {
           return res.status(401).json({ msg: "Usuário não encontrado" });
@@ -149,23 +149,24 @@ app.post('/usuario/login', async (req, res) => {
           return res.status(401).json({ msg: "Senha incorreta" });
       }
       
-      res.json({ msg: "Login bem-sucedido", usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email } });
+      res.json({ msg: "Login bem-sucedido", usuario: { id:  usuario.nome, } });
   } catch (err) {
       res.status(500).json({ msg: "Erro ao realizar login", error: err.message });
+      
   }
 });
 
 // Editar usuário
 app.put('/usuario/editar/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, email, senha, endereco, cidade, estado } = req.body;
-  let sql = "UPDATE JJJ_usuario SET nome = ?, email = ?, endereco = ?, cidade = ?, estado = ? WHERE id = ?";
-  let values = [nome, email, endereco, cidade, estado, id];
+  const { nome, senha, tipo_usuario, data_cadastro } = req.body;
+  let sql = "UPDATE JJJ_usuario SET nome = ?, senha = ?, tipo_usuario = ?, data_cadastro = ?  WHERE id = ?";
+  let values = [nome, senha, tipo_usuario, data_cadastro, id];
   
   if (senha) {
       const senhaCriptografada = await bcrypt.hash(senha, 10);
-      sql = "UPDATE JJJ_usuario SET nome = ?, email = ?, senha = ?, endereco = ?, cidade = ?, estado = ? WHERE id = ?";
-      values = [nome, email, senhaCriptografada, endereco, cidade, estado, id];
+      sql = "UPDATE JJJ_usuario SET nome = ?, email = ?, senha = ?, tipo_usuario = ?, data_cadastro =  ? WHERE id = ?";
+      values = [nome, senhaCriptografada, tipo_usuario, data_cadastro, id];
   }
 
   try {
@@ -183,11 +184,11 @@ app.put('/usuario/editar/:id', async (req, res) => {
 // Editar registro
 app.put('/registro/editar/:id', async (req, res) => {
   const { id } = req.params;
-  const { campo1, campo2, campo3 } = req.body;
-  const sql = "UPDATE JJJ_registros SET campo1 = ?, campo2 = ?, campo3 = ? WHERE id = ?";
+  const { longitude, latitude, endereco, caminhoFoto, data_registro,status } = req.body;
+  const sql = "UPDATE JJJ_registros SET longitude = ?, latitude = ?, endereco = ?, caminhoFoto = ?, data_registro = ?, status = ? WHERE id = ?";
 
   try {
-      const [result] = await connection.execute(sql, [campo1, campo2, campo3, id]);
+      const [result] = await connection.execute(sql, [longitude, latitude, endereco, caminhoFoto, data_registro,status, id]);
       if (result.affectedRows > 0) {
           res.json({ msg: "Registro atualizado com sucesso!" });
       } else {
@@ -197,3 +198,4 @@ app.put('/registro/editar/:id', async (req, res) => {
       res.status(500).json({ msg: "Erro ao editar registro", error: err.message });
   }
 });
+
