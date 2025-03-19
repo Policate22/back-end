@@ -1,0 +1,17 @@
+{
+  "name": "back-end",
+  "version": "1.0.0",
+  "description": "projeto para funcionamento do crud",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "policate",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "crud": "^0.0.28",
+    "express": "^4.21.2",
+    "mysql2": "^3.13.0"
+  }
+}
