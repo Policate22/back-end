@@ -129,3 +129,71 @@ app.delete('/registro/excluir/:id', async (req, res) => {
         });
     }
 });
+
+// Rota de Login
+app.post('/usuario/login', async (req, res) => {
+  const { email, senha } = req.body;
+  const sql = "SELECT * FROM JJJ_usuario WHERE email = ?";
+
+  try {
+      const [rows] = await connection.execute(sql, [email]);
+      
+      if (rows.length === 0) {
+          return res.status(401).json({ msg: "Usuário não encontrado" });
+      }
+      
+      const usuario = rows[0];
+      const senhaValida = await bcrypt.compare(senha, usuario.senha);
+      
+      if (!senhaValida) {
+          return res.status(401).json({ msg: "Senha incorreta" });
+      }
+      
+      res.json({ msg: "Login bem-sucedido", usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email } });
+  } catch (err) {
+      res.status(500).json({ msg: "Erro ao realizar login", error: err.message });
+  }
+});
+
+// Editar usuário
+app.put('/usuario/editar/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, senha, endereco, cidade, estado } = req.body;
+  let sql = "UPDATE JJJ_usuario SET nome = ?, email = ?, endereco = ?, cidade = ?, estado = ? WHERE id = ?";
+  let values = [nome, email, endereco, cidade, estado, id];
+  
+  if (senha) {
+      const senhaCriptografada = await bcrypt.hash(senha, 10);
+      sql = "UPDATE JJJ_usuario SET nome = ?, email = ?, senha = ?, endereco = ?, cidade = ?, estado = ? WHERE id = ?";
+      values = [nome, email, senhaCriptografada, endereco, cidade, estado, id];
+  }
+
+  try {
+      const [result] = await connection.execute(sql, values);
+      if (result.affectedRows > 0) {
+          res.json({ msg: "Usuário atualizado com sucesso!" });
+      } else {
+          res.status(404).json({ msg: "Usuário não encontrado" });
+      }
+  } catch (err) {
+      res.status(500).json({ msg: "Erro ao editar usuário", error: err.message });
+  }
+});
+
+// Editar registro
+app.put('/registro/editar/:id', async (req, res) => {
+  const { id } = req.params;
+  const { campo1, campo2, campo3 } = req.body;
+  const sql = "UPDATE JJJ_registros SET campo1 = ?, campo2 = ?, campo3 = ? WHERE id = ?";
+
+  try {
+      const [result] = await connection.execute(sql, [campo1, campo2, campo3, id]);
+      if (result.affectedRows > 0) {
+          res.json({ msg: "Registro atualizado com sucesso!" });
+      } else {
+          res.status(404).json({ msg: "Registro não encontrado" });
+      }
+  } catch (err) {
+      res.status(500).json({ msg: "Erro ao editar registro", error: err.message });
+  }
+});
